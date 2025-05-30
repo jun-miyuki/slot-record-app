@@ -25,11 +25,11 @@ def load_settings():
 def save_settings(settings):
     with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
         json.dump(settings, f, ensure_ascii=False, indent=2)
+
 def load_data():
     df = pd.read_csv(FILENAME)
     expected_cols = ["ユーザー", "日付", "店舗", "機種", "台番号", "回転数", "BIG回数", "REG回数", "BB確率", "RB確率", "合算", "差枚差分", "収支", "メモ"]
     return df[expected_cols] if set(expected_cols).issubset(df.columns) else pd.DataFrame(columns=expected_cols)
-    # 記録処理を続行
 
 def save_record(record):
     df = load_data()
@@ -56,6 +56,37 @@ st.button("🔧 設定画面を表示", on_click=lambda: st.session_state.update
 
 if st.session_state.get('show_setting'):
     st.title("🔧 設定編集画面")
+
+    with st.expander("👤 ユーザー設定"):
+        new_user = st.text_input("新しいユーザー名を追加", key="new_user")
+        if st.button("ユーザーを追加"):
+            if new_user and new_user not in settings["users"]:
+                settings["users"].append(new_user)
+                save_settings(settings)
+                st.success(f"{new_user} を追加しました")
+
+    with st.expander("🏢 店舗設定"):
+        new_shop = st.text_input("新しい店舗名を追加", key="new_shop")
+        rate = st.number_input("換金率", value=17.85)
+        buy = st.number_input("買値", value=21.74)
+        count = st.number_input("台数", value=60)
+        if st.button("店舗を追加"):
+            if new_shop and new_shop not in settings["shops"]:
+                settings["shops"][new_shop] = {
+                    "換金率": rate,
+                    "買値": buy,
+                    "台数": count
+                }
+                save_settings(settings)
+                st.success(f"{new_shop} を追加しました")
+
+    with st.expander("🎰 機種設定"):
+        new_machine = st.text_input("新しい機種名を追加", key="new_machine")
+        if st.button("機種を追加"):
+            if new_machine and new_machine not in settings["machines"]:
+                settings["machines"].append(new_machine)
+                save_settings(settings)
+                st.success(f"{new_machine} を追加しました")
 else:
     st.markdown("<h4 style='text-align:center;'>スロット実践記録アプリ</h4>", unsafe_allow_html=True)
 
@@ -152,7 +183,6 @@ else:
 
     col1, col2 = st.columns(2)
     with col1:
-
         if st.button("💾 記録する"):
             if not number or seat_games == 0 or seat_bb == 0 or seat_rb == 0:
                 st.warning("台番号、終了時回転数、BIG回数、REG回数は必須です")
@@ -195,4 +225,4 @@ else:
     df = load_data()
     if not df.empty:
         df_display = df[df["ユーザー"] == user] if user else df.copy()
-        st.dataframe(df_display.head(10)) 
+        st.dataframe(df_display.head(10))
